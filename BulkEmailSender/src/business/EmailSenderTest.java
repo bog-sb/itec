@@ -26,10 +26,10 @@ public class EmailSenderTest {
 		s.setTo(to);
 		s.setSubject("SMTP test");
 		s.setAttachments(at);
-		s.setCounter();
+		s.setCounter(true);
 		s.setQuantity(3);
 		s.setDelay(1000);
-		s.unsetRandomSubject();
+		s.setRandomSubject(true);
 		
 		s.setVia("SMTP");
 		EmailSender es=new EmailSender();
