@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+<!-- definition of simple elements -->
+<xs:element name="from" type="xs:string"/>
+<xs:element name="subject" type="xs:string"/>
+<xs:element name="message" type="xs:string"/>
+<xs:element name="to" type="xs:string"/>
+<xs:element name="attachment" type="xs:string"/>
+<xs:element name="via" type="xs:string"/>
+<xs:element name="server" type="xs:string"/>
+<xs:element name="serverPort" type="xs:positiveInteger"/>
+<xs:element name="user" type="xs:string"/>
+<xs:element name="password" type="xs:string"/>
+<xs:element name="quantity" type="xs:positiveInteger"/>
+<xs:element name="delay" type="xs:positiveInteger"/>
+<xs:element name="counter" type="xs:string"/>
+<xs:element name="randomSubject" type="xs:string"/>
+<xs:element name="randomMessage" type="xs:string"/>
+
+
+<!-- definition of complex elements -->
+<xs:element name="tos">
+  <xs:complexType>
+    <xs:sequence>
+      <xs:element ref="to" minOccurs ="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="attachments">
+  <xs:complexType>
+    <xs:sequence>
+      <xs:element ref="attachment"  minOccurs ="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="session">
+  <xs:complexType>
+    <xs:sequence>
+      <xs:element ref="from"/>
+      <xs:element ref="tos"/>
+      <xs:element ref="subject"/>
+      <xs:element ref="message"/>
+      <xs:element ref="attachments"/>
+      <xs:element ref="via"/>
+      <xs:element ref="server"/>
+      <xs:element ref="serverPort"/>
+      <xs:element ref="user"/>
+      <xs:element ref="password"/>
+      <xs:element ref="quantity"/>
+      <xs:element ref="delay"/>
+      <xs:element ref="counter"/>
+      <xs:element ref="randomSubject"/>
+      <xs:element ref="randomMessage"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>
