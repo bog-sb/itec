@@ -85,7 +85,7 @@ public class SMTPSender implements Runnable {
 				subject=sess.getSubject();
 				
 				if (sess.getCounter()) {
-					subject=String.valueOf(counter)+". "+subject;
+					subject=String.valueOf(counter+1)+". "+subject;
 				}
 				if(sess.getRandomSubject()){
 					subject=subject+" "+RandomGenerator.getRandomSubject();

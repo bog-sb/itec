@@ -2,6 +2,7 @@ package business;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.Date;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -10,7 +11,7 @@ public class RandomGenerator {
 	static
 	{
 		rand=new Random();
-		rand.setSeed(5);
+		rand.setSeed(new Date().getTime());
 	}
 	
 	public static String getRandomSubject(){
