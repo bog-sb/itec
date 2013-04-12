@@ -9,6 +9,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Iterator;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Vector;
 
 import javax.swing.ButtonGroup;
@@ -54,7 +56,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
 @SuppressWarnings("serial")
-public class MainWindow extends JFrame {
+public class MainWindow extends JFrame implements Observer {
 
 	private JPanel contentPane;
 	private JTextField txtSrcaddr;
@@ -598,6 +600,12 @@ public class MainWindow extends JFrame {
 		s.setServerPort((Integer)txtPort.getValue());
 		s.setUser(txtUser.getText());
 		s.setPassword(String.valueOf(txtPasswd.getPassword()));
+	}
+
+	@Override
+	public void update(Observable arg0, Object arg1) {
+		// TODO Auto-generated method stub
+		
 	}
 }
 

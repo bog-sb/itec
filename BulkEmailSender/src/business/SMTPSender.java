@@ -5,16 +5,16 @@ import javax.mail.*;
 import javax.mail.internet.*;
 import javax.activation.*;
 
-public class SMTPSender implements Runnable {
+public class SMTPSender extends Observable implements Runnable {
 	private domain.Session sess;
 
-	public SMTPSender(domain.Session s) {
+	public SMTPSender(domain.Session s, Observer o) {
+		this.addObserver(o);
 		sess = s;
 	}
 
 	@Override
 	public void run() {
-		// Assuming you are sending email from localhost
 		String host = sess.getServer();
 		int port = sess.getServerPort();
 
@@ -98,7 +98,7 @@ public class SMTPSender implements Runnable {
 				System.out.println(String.format(
 						"Sent message no %d successfully.", counter));
 				
-				//wait untill the next message
+				//wait until the next message
 				Thread.sleep(sess.getDelay());
 			}
 		} catch (MessagingException | InterruptedException mex) {
