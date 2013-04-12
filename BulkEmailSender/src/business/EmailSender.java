@@ -11,7 +11,7 @@ public class EmailSender {
 	public void runSession(Session session) {
 		Runnable sender = null;
 
-		if (session.getVia().equals("SMTP")) {
+		if (session.getVia().equalsIgnoreCase("SMTP")) {
 			sender = new SMTPSender(session, observer);
 		} else if (session.getVia().equalsIgnoreCase("WCF")) {
 			// sender=new WCFSender(session);
@@ -37,7 +37,7 @@ public class EmailSender {
 		}
 	}
 
-	public void addMailCounterObserver(Observer o) {
+	public void setMailCounterObserver(Observer o) {
 		observer = o;
 	}
 }

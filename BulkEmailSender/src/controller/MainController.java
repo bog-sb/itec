@@ -7,6 +7,8 @@ import javax.xml.transform.TransformerException;
 
 import org.xml.sax.SAXException;
 
+import ui.MainWindow;
+
 import business.EmailSender;
 import domain.Session;
 
@@ -28,7 +30,7 @@ public class MainController {
 	{
 		//TODO: validate session, filename
 		ses = new Session(filename);
-		sen = new EmailSender();
+		//sen = new EmailSender();
 	}
 	public void saveSession(String filename) throws TransformerException, ParserConfigurationException
 	{
@@ -37,6 +39,7 @@ public class MainController {
 	
 	public void runSession()
 	{
+		
 		sen.runSession(ses);
 	}
 	public void stopSession()
@@ -46,5 +49,9 @@ public class MainController {
 	public Session getSession()
 	{
 		return ses;
+	}
+
+	public void setMailCounterObserver(MainWindow mainWindow) {
+		sen.setMailCounterObserver(mainWindow);
 	}
 }

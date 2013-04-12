@@ -64,6 +64,7 @@ public class MainWindow extends JFrame implements Observer {
 	private JTextField txtSubject;
 	private JTextField txtServer;
 	private JTextField txtUser;
+	private JProgressBar progressBar;
 	private JLabel lblTitle = new JLabel("<unsaved>");
 
 	private AboutBox popup = new AboutBox();
@@ -95,6 +96,7 @@ public class MainWindow extends JFrame implements Observer {
 			public void run() {
 				try {
 					MainController ctrl = new MainController();
+
 					MainWindow frame = new MainWindow(ctrl);
 
 					ctrl.newSession();
@@ -116,7 +118,7 @@ public class MainWindow extends JFrame implements Observer {
 	public MainWindow(final MainController ctl) {
 
 		this.ctrl = ctl;
-
+		ctrl.setMailCounterObserver(this);
 		setIconImage(Toolkit
 				.getDefaultToolkit()
 				.getImage(
@@ -204,21 +206,17 @@ public class MainWindow extends JFrame implements Observer {
 		ActionListener saveAct = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					if (chooseYourDestiny.getSelectedFile() != null)
-					{
-					updateSession();
-					ctrl.saveSession(chooseYourDestiny.getSelectedFile()
-							.getPath());
-					lblTitle.setText(chooseYourDestiny.getSelectedFile()
-							.getName());
-					isSaved = true;
-					}
-					else
-					{
+					if (chooseYourDestiny.getSelectedFile() != null) {
+						updateSession();
+						ctrl.saveSession(chooseYourDestiny.getSelectedFile()
+								.getPath());
+						lblTitle.setText(chooseYourDestiny.getSelectedFile()
+								.getName());
+						isSaved = true;
+					} else {
 						saveAsAct.actionPerformed(e);
 					}
-				}
-				catch (TransformerException e1) {
+				} catch (TransformerException e1) {
 					JOptionPane.showMessageDialog(null, "XML exception",
 							"Error", JOptionPane.WARNING_MESSAGE);
 				} catch (ParserConfigurationException e1) {
@@ -290,7 +288,7 @@ public class MainWindow extends JFrame implements Observer {
 		txtSrcaddr = new JTextField();
 		txtSrcaddr.addPropertyChangeListener(new PropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent arg0) {
-				
+
 			}
 		});
 		txtSrcaddr.setBounds(0, 18, 249, 20);
@@ -304,7 +302,7 @@ public class MainWindow extends JFrame implements Observer {
 		txtDestaddr = new JTextField();
 		txtDestaddr.addPropertyChangeListener(new PropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent evt) {
-				
+
 			}
 		});
 		txtDestaddr.setBounds(0, 56, 249, 20);
@@ -318,7 +316,7 @@ public class MainWindow extends JFrame implements Observer {
 		txtSubject = new JTextField();
 		txtSubject.addPropertyChangeListener(new PropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent arg0) {
-				
+
 			}
 		});
 		txtSubject.setBounds(0, 94, 249, 20);
@@ -328,7 +326,7 @@ public class MainWindow extends JFrame implements Observer {
 		JLabel lblMessage = new JLabel("Message:");
 		lblMessage.setBounds(269, 22, 97, 20);
 		panel.add(lblMessage);
-		
+
 		JScrollPane scrollPane_1 = new JScrollPane();
 		scrollPane_1.setBounds(10, 165, 249, 114);
 		panel.add(scrollPane_1);
@@ -345,18 +343,19 @@ public class MainWindow extends JFrame implements Observer {
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
 					try {
 						me.updateFields();
-						Vector<String>vec = ctrl.getSession().getAttachments();
+						Vector<String> vec = ctrl.getSession().getAttachments();
 						vec.add(attachFile.getSelectedFile().getPath());
 						ctrl.getSession().setAttachments(vec);
-						listAttachments.setListData(ctrl.getSession().getAttachments());
-						
+						listAttachments.setListData(ctrl.getSession()
+								.getAttachments());
+
 					} catch (Exception ex) {
 						JOptionPane.showMessageDialog(null, ex.getMessage(),
 								"Error", JOptionPane.WARNING_MESSAGE);
 						ex.printStackTrace();
 					}
 				}
-				
+
 			}
 		});
 		btnAttach.setBounds(10, 292, 82, 23);
@@ -366,7 +365,7 @@ public class MainWindow extends JFrame implements Observer {
 		btnRemove.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				int dead = listAttachments.getSelectedIndex();
-				Vector<String>vec = ctrl.getSession().getAttachments();
+				Vector<String> vec = ctrl.getSession().getAttachments();
 				vec.remove(dead);
 				ctrl.getSession().setAttachments(vec);
 				listAttachments.setListData(ctrl.getSession().getAttachments());
@@ -486,7 +485,7 @@ public class MainWindow extends JFrame implements Observer {
 		txtNumber = new JSpinner();
 		txtNumber.addPropertyChangeListener(new PropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent evt) {
-				
+
 			}
 		});
 		txtNumber.setModel(new SpinnerNumberModel(new Integer(1),
@@ -499,21 +498,20 @@ public class MainWindow extends JFrame implements Observer {
 		panel_3.add(lblDelayBetweenSending);
 
 		txtDelay = new JSpinner();
-		txtDelay.addPropertyChangeListener(new PropertyChangeListener() {
-			public void propertyChange(PropertyChangeEvent evt) {
-				ctrl.getSession().setDelay((Integer)txtDelay.getValue());
-			}
-		});
 		txtDelay.setModel(new SpinnerNumberModel(new Integer(1000),
 				new Integer(0), null, new Integer(1)));
+		txtDelay.addPropertyChangeListener(new PropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent evt) {
+				ctrl.getSession().setDelay((Integer) txtDelay.getValue());
+			}
+		});
+		
 		txtDelay.setBounds(177, 62, 67, 20);
 		panel_3.add(txtDelay);
-
 
 		chckbxCounter.setSelected(true);
 		chckbxCounter.setBounds(10, 160, 234, 25);
 		panel_3.add(chckbxCounter);
-
 
 		chckbxRandom.setSelected(true);
 		chckbxRandom.setBounds(10, 188, 234, 25);
@@ -523,7 +521,24 @@ public class MainWindow extends JFrame implements Observer {
 		lblSubjectCustomization.setBounds(10, 139, 234, 14);
 		panel_3.add(lblSubjectCustomization);
 
-		JProgressBar progressBar = new JProgressBar();
+		progressBar = new JProgressBar();
+//		progressBar.addPropertyChangeListener(new PropertyChangeListener() {
+//			public void propertyChange(PropertyChangeEvent arg0) {
+//				if (progressBar.getValue() == -1) {
+//					progressBar.setIndeterminate(true);
+//					progressBar.setString("Connecting...");
+//				}else if(progressBar.getPercentComplete()==100){
+//					progressBar.setValue(0);
+//					progressBar.setString("Finished");
+//				}else{
+//					progressBar.setIndeterminate(false);
+//				}
+//				
+//				
+//			}
+//		});
+		progressBar.setMinimum(0);
+		progressBar.setStringPainted(true);
 		progressBar.setBounds(12, 608, 254, 27);
 		contentPane.add(progressBar);
 
@@ -540,6 +555,7 @@ public class MainWindow extends JFrame implements Observer {
 		btnStart.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				me.updateSession();
+				progressBar.setMaximum((int) txtNumber.getValue());
 				ctrl.runSession();
 				btnStop.setEnabled(true);
 				btnStart.setEnabled(false);
@@ -580,9 +596,8 @@ public class MainWindow extends JFrame implements Observer {
 		chckbxCounter.setSelected(s.getCounter());
 		chckbxRandom.setSelected(s.getRandomSubject());
 	}
-	
-	public void updateSession()
-	{
+
+	public void updateSession() {
 		Session s = ctrl.getSession();
 		s.setFrom(txtSrcaddr.getText());
 		Vector<String> tos = new Vector<String>();
@@ -597,16 +612,14 @@ public class MainWindow extends JFrame implements Observer {
 		s.setRandomSubject(chckbxRandom.isSelected());
 		s.setMessage(txtrMessage.getText());
 		s.setServer(txtServer.getText());
-		s.setServerPort((Integer)txtPort.getValue());
+		s.setServerPort((Integer) txtPort.getValue());
 		s.setUser(txtUser.getText());
 		s.setPassword(String.valueOf(txtPasswd.getPassword()));
 	}
 
 	@Override
 	public void update(Observable arg0, Object arg1) {
-		// TODO Auto-generated method stub
-		
+		int counter = (Integer) arg1;
+		progressBar.setValue(counter + 1);
 	}
 }
-
-

@@ -81,6 +81,8 @@ public class SMTPSender extends Observable implements Runnable {
 			message.setContent(multipart);
 
 			for (counter = 0; counter < quantity; counter++) {
+				setChanged();
+				notifyObservers(counter);
 				// Set Subject: header field
 				subject=sess.getSubject();
 				
