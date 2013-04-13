@@ -75,10 +75,9 @@ public class MainWindow extends JFrame implements Observer {
 	private AboutBox popup = new AboutBox();
 	private ActionListener saveAct;
 	private ActionListener saveAsAct;
-	private DocumentListener markDirtyAct;
-
-	private MainWindow me = this;
-	private ButtonGroup buttonGroup = new ButtonGroup();
+	// For the anonymous inner classes:
+	private final MainWindow me = this;
+	private final ButtonGroup buttonGroup = new ButtonGroup();
 	private JFileChooser chooseYourDestiny = new JFileChooser(".");
 	private JFileChooser attachFile = new JFileChooser(".");
 	private JPasswordField txtPasswd;
@@ -124,7 +123,7 @@ public class MainWindow extends JFrame implements Observer {
 
 						ctrl.newSession();
 						frame.updateFields();
-						frame.isSaved = true;
+
 						frame.setVisible(true);
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -176,7 +175,6 @@ public class MainWindow extends JFrame implements Observer {
 					chooseYourDestiny.setSelectedFile(null);
 					lblTitle.setText("<unsaved>");
 					updateFields();
-					me.isSaved = true;
 				}
 			}
 		});
@@ -208,7 +206,6 @@ public class MainWindow extends JFrame implements Observer {
 						}
 					}
 					me.updateFields();
-					me.isSaved = true;
 				}
 			}
 		});
@@ -262,23 +259,6 @@ public class MainWindow extends JFrame implements Observer {
 				}
 			}
 		};
-
-		markDirtyAct = new DocumentListener() {
-				  public void changedUpdate(DocumentEvent e) {
-				    warn(e);
-				  }
-				  public void removeUpdate(DocumentEvent e) {
-				    warn(e);
-				  }
-				  public void insertUpdate(DocumentEvent e) {
-				    warn(e);
-				  }
-				  public void warn(DocumentEvent e) {
-						me.isSaved = false;
-						System.out.println("I'm so dirty: "+e.getDocument().toString());
-					}
-		};
-
 		mntmSave.addActionListener(saveAct);
 
 		mntmSave.setIcon(new ImageIcon(
@@ -348,7 +328,11 @@ public class MainWindow extends JFrame implements Observer {
 		panel_4.add(lblFrom);
 
 		txtSrcaddr = new JTextField();
-		txtSrcaddr.getDocument().addDocumentListener(markDirtyAct);
+		txtSrcaddr.addPropertyChangeListener(new PropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent arg0) {
+
+			}
+		});
 		txtSrcaddr.setBounds(0, 18, 249, 20);
 		panel_4.add(txtSrcaddr);
 		txtSrcaddr.setColumns(10);
@@ -358,7 +342,11 @@ public class MainWindow extends JFrame implements Observer {
 		panel_4.add(lblTo);
 
 		txtDestaddr = new JTextField();
-		txtDestaddr.getDocument().addDocumentListener(markDirtyAct);
+		txtDestaddr.addPropertyChangeListener(new PropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent evt) {
+
+			}
+		});
 		txtDestaddr.setBounds(0, 56, 249, 20);
 		panel_4.add(txtDestaddr);
 		txtDestaddr.setColumns(10);
@@ -368,7 +356,11 @@ public class MainWindow extends JFrame implements Observer {
 		panel_4.add(lblSubject);
 
 		txtSubject = new JTextField();
-		txtSubject.getDocument().addDocumentListener(markDirtyAct);
+		txtSubject.addPropertyChangeListener(new PropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent arg0) {
+
+			}
+		});
 		txtSubject.setBounds(0, 94, 249, 20);
 		panel_4.add(txtSubject);
 		txtSubject.setColumns(10);
@@ -394,20 +386,19 @@ public class MainWindow extends JFrame implements Observer {
 					try {
 						me.updateSession();
 						Vector<String> vec = ctrl.getSession().getAttachments();
-						Vector<String> showVec = new Vector<String>();
 
+						Vector<String> showVec = new Vector<String>();
 						for (String el : vec) {
 							Path p = Paths.get(el);
 							showVec.add(p.getName(p.getNameCount() - 1)
 									.toString());
 						}
-
 						vec.add(attachFile.getSelectedFile().getPath());
 						showVec.add(attachFile.getSelectedFile().getName());
 
 						ctrl.getSession().setAttachments(vec);
 						listAttachments.setListData(showVec);
-						isSaved = false;
+
 					} catch (Exception ex) {
 						JOptionPane.showMessageDialog(null, ex.getMessage(),
 								"Error", JOptionPane.WARNING_MESSAGE);
@@ -430,7 +421,6 @@ public class MainWindow extends JFrame implements Observer {
 					ctrl.getSession().setAttachments(vec);
 					listAttachments.setListData(ctrl.getSession()
 							.getAttachments());
-					isSaved = false;
 				}
 			}
 		});
@@ -464,7 +454,6 @@ public class MainWindow extends JFrame implements Observer {
 
 		JRadioButton rdbtnSmtp = new JRadioButton("SMTP");
 		rdbtnSmtp.setSelected(true);
-		ctrl.getSession().setVia("smtp");
 		buttonGroup.add(rdbtnSmtp);
 		rdbtnSmtp.setBounds(6, 29, 109, 23);
 		panel_2.add(rdbtnSmtp);
@@ -479,7 +468,6 @@ public class MainWindow extends JFrame implements Observer {
 				} else {
 					ctrl.getSession().setVia("smtp");
 				}
-				isSaved = false;
 			}
 		});
 
@@ -497,7 +485,6 @@ public class MainWindow extends JFrame implements Observer {
 		txtServer.setBounds(10, 24, 160, 20);
 		panelESMP.add(txtServer);
 		txtServer.setColumns(10);
-		txtServer.getDocument().addDocumentListener(markDirtyAct);
 
 		JLabel lblServer_1 = new JLabel("Server");
 		lblServer_1.setBounds(10, 11, 46, 14);
@@ -509,10 +496,8 @@ public class MainWindow extends JFrame implements Observer {
 
 		txtUser = new JTextField();
 		txtUser.setBounds(78, 55, 148, 20);
-		txtUser.getDocument().addDocumentListener(markDirtyAct);
-		txtUser.setColumns(10);
 		panelESMP.add(txtUser);
-		
+		txtUser.setColumns(10);
 
 		JLabel lblUser = new JLabel("User");
 		lblUser.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -526,12 +511,10 @@ public class MainWindow extends JFrame implements Observer {
 
 		txtPasswd = new JPasswordField();
 		txtPasswd.setBounds(78, 78, 148, 20);
-		//txtPasswd.addPropertyChangeListener(markDirtyAct);
 		panelESMP.add(txtPasswd);
-		
 		txtPort.setModel(new SpinnerNumberModel(0, 0, 65535, 1));
+
 		txtPort.setBounds(182, 25, 44, 20);
-		//txtPort.addPropertyChangeListener(markDirtyAct);
 		panelESMP.add(txtPort);
 
 		JLabel lblServer = new JLabel("Protocol");
@@ -553,7 +536,11 @@ public class MainWindow extends JFrame implements Observer {
 		panel_3.add(lblNumberOfEmails);
 
 		txtNumber = new JSpinner();
-		//txtNumber.addPropertyChangeListener(markDirtyAct);
+		txtNumber.addPropertyChangeListener(new PropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent evt) {
+
+			}
+		});
 		txtNumber.setModel(new SpinnerNumberModel(new Integer(1),
 				new Integer(0), null, new Integer(1)));
 		txtNumber.setBounds(177, 36, 67, 20);
@@ -564,7 +551,11 @@ public class MainWindow extends JFrame implements Observer {
 		panel_3.add(lblDelayBetweenSending);
 
 		txtDelay = new JSpinner();
-		//txtDelay.addPropertyChangeListener(markDirtyAct);
+		txtDelay.addPropertyChangeListener(new PropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent evt) {
+				ctrl.getSession().setDelay((Integer) txtDelay.getValue());
+			}
+		});
 		txtDelay.setModel(new SpinnerNumberModel(new Integer(1000),
 				new Integer(0), null, new Integer(1)));
 		txtDelay.setBounds(177, 62, 67, 20);
@@ -572,12 +563,10 @@ public class MainWindow extends JFrame implements Observer {
 
 		chckbxCounter.setSelected(true);
 		chckbxCounter.setBounds(10, 160, 234, 25);
-		//chckbxCounter.addPropertyChangeListener(markDirtyAct);
 		panel_3.add(chckbxCounter);
 
 		chckbxRandom.setSelected(true);
 		chckbxRandom.setBounds(10, 188, 234, 25);
-		//chckbxRandom.addPropertyChangeListener(markDirtyAct);
 		panel_3.add(chckbxRandom);
 
 		JLabel lblSubjectCustomization = new JLabel("Subject customization");
@@ -678,7 +667,7 @@ public class MainWindow extends JFrame implements Observer {
 	}
 
 	public boolean checkSave() {
-		if (isSaved == false) {
+		isSaved = false;
 		int response = JOptionPane.showConfirmDialog(null,
 				"Do you want to save the session?", "Warning",
 				JOptionPane.YES_NO_CANCEL_OPTION);
@@ -691,8 +680,6 @@ public class MainWindow extends JFrame implements Observer {
 			return true;
 		}
 		return false;
-		}
-		return true;
 	}
 
 	public void quit() {
@@ -703,14 +690,14 @@ public class MainWindow extends JFrame implements Observer {
 
 	@Override
 	public void update(Observable arg0, Object arg1) {
-
+		
 		int counter = (Integer) arg1;
 		progressBar.setValue(counter);
-		if (progressBar.getValue() > 0) {
+		if(progressBar.getValue()>0) {
 			progressBar.setIndeterminate(false);
 			progressBar.setStringPainted(false);
 		}
-
+			
 		if (counter == progressBar.getMaximum()) {
 			btnStop.setEnabled(false);
 			btnStart.setEnabled(true);
