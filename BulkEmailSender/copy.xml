@@ -1,23 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <session>
-<from>sender@domain.com</from>
-<tos>
-<to>first@example.com</to>
-<to>second@example.ro</to>
-</tos>
-<subject>Dummy Subject</subject>
-<message>sfjlsakjfkasjhgsfadsgfadgasg</message>
-<attachments>
-<attachment>filepath1</attachment>
-<attachment>filepath2</attachment>
-</attachments>
-<via>SMPT</via>
-<server>smtp.gmail.com</server>
+<from/>
+<tos/>
+<subject/>
+<message/>
+<attachments/>
+<via>smtp</via>
+<server>localhost</server>
 <serverPort>25</serverPort>
-<user>asdf</user>
-<password>asdfasd</password>
-<quantity>100</quantity>
-<delay>2000</delay>
+<user/>
+<password/>
+<quantity>1</quantity>
+<delay>1000</delay>
 <counter>true</counter>
 <randomSubject>true</randomSubject>
 <randomMessage>false</randomMessage>
