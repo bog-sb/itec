@@ -51,7 +51,7 @@ public class SMTPSender extends Observable implements Runnable {
 			properties.put("mail.user", user);
 			properties.put("mail.password", pass);
 			properties.put("mail.smtp.auth", "true");
-			properties.put("mail.smtp.starttls.enable", "true");
+			//properties.put("mail.smtp.starttls.enable", "true");
 			session = Session.getInstance(properties,
 					new javax.mail.Authenticator() {
 						protected PasswordAuthentication getPasswordAuthentication() {

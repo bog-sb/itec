@@ -61,6 +61,8 @@ import javax.xml.transform.TransformerException;
 import javax.swing.KeyStroke;
 import java.awt.event.KeyEvent;
 import java.awt.event.InputEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
 
 @SuppressWarnings("serial")
 public class MainWindow extends JFrame implements Observer {
@@ -275,7 +277,6 @@ public class MainWindow extends JFrame implements Observer {
 				  }
 				  public void warn(DocumentEvent e) {
 						me.isSaved = false;
-						System.out.println("I'm so dirty: "+e.getDocument().toString());
 					}
 		};
 
@@ -440,11 +441,13 @@ public class MainWindow extends JFrame implements Observer {
 		JLabel lblAttachments = new JLabel("Attachments:");
 		lblAttachments.setBounds(10, 146, 249, 14);
 		panel.add(lblAttachments);
-
+		
+		
+		txtrMessage.getDocument().addDocumentListener(markDirtyAct);
 		JScrollPane scrollPane = new JScrollPane();
 		scrollPane.setBounds(271, 44, 248, 235);
 		panel.add(scrollPane);
-
+		
 		scrollPane.setViewportView(txtrMessage);
 
 		Panel panel_1 = new Panel();
@@ -526,8 +529,13 @@ public class MainWindow extends JFrame implements Observer {
 
 		txtPasswd = new JPasswordField();
 		txtPasswd.setBounds(78, 78, 148, 20);
-		//txtPasswd.addPropertyChangeListener(markDirtyAct);
+		
 		panelESMP.add(txtPasswd);
+		txtPort.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent arg0) {
+				me.isSaved = false;
+			}
+		});
 		
 		txtPort.setModel(new SpinnerNumberModel(0, 0, 65535, 1));
 		txtPort.setBounds(182, 25, 44, 20);
@@ -553,6 +561,11 @@ public class MainWindow extends JFrame implements Observer {
 		panel_3.add(lblNumberOfEmails);
 
 		txtNumber = new JSpinner();
+		txtNumber.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				me.isSaved = false;
+			}
+		});
 		//txtNumber.addPropertyChangeListener(markDirtyAct);
 		txtNumber.setModel(new SpinnerNumberModel(new Integer(1),
 				new Integer(0), null, new Integer(1)));
@@ -564,16 +577,31 @@ public class MainWindow extends JFrame implements Observer {
 		panel_3.add(lblDelayBetweenSending);
 
 		txtDelay = new JSpinner();
+		txtDelay.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				me.isSaved = false;
+			}
+		});
 		//txtDelay.addPropertyChangeListener(markDirtyAct);
 		txtDelay.setModel(new SpinnerNumberModel(new Integer(1000),
 				new Integer(0), null, new Integer(1)));
 		txtDelay.setBounds(177, 62, 67, 20);
 		panel_3.add(txtDelay);
+		chckbxCounter.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				me.isSaved = false;
+			}
+		});
 
 		chckbxCounter.setSelected(true);
 		chckbxCounter.setBounds(10, 160, 234, 25);
 		//chckbxCounter.addPropertyChangeListener(markDirtyAct);
 		panel_3.add(chckbxCounter);
+		chckbxRandom.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				me.isSaved = false;
+			}
+		});
 
 		chckbxRandom.setSelected(true);
 		chckbxRandom.setBounds(10, 188, 234, 25);
@@ -591,17 +619,20 @@ public class MainWindow extends JFrame implements Observer {
 
 		btnStop.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				boolean wasSaved = me.isSaved;
 				ctrl.stopSession();
 				progressBar.setIndeterminate(false);
 				progressBar.setString("");
 				progressBar.setValue(0);
 				btnStop.setEnabled(false);
 				btnStart.setEnabled(true);
+				me.isSaved = wasSaved;
 			}
 		});
 
 		btnStart.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
+				boolean wasSaved = me.isSaved;
 				me.updateSession();
 				try {
 					progressBar.setIndeterminate(true);
@@ -610,6 +641,7 @@ public class MainWindow extends JFrame implements Observer {
 					ctrl.runSession();
 					btnStop.setEnabled(true);
 					btnStart.setEnabled(false);
+					me.isSaved = wasSaved;
 				} catch (Exception e) {
 					progressBar.setIndeterminate(false);
 					progressBar.setString("");
