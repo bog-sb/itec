@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<session>
+<from/>
+<tos>
+<to/>
+</tos>
+<subject/>
+<message/>
+<attachments/>
+<via>smtp</via>
+<server/>
+<serverPort>0</serverPort>
+<user/>
+<password/>
+<quantity>0</quantity>
+<delay>0</delay>
+<counter>false</counter>
+<randomSubject>true</randomSubject>
+<randomMessage>false</randomMessage>
+</session>

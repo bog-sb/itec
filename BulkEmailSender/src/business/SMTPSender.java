@@ -5,21 +5,29 @@ import javax.mail.*;
 import javax.mail.internet.*;
 import javax.activation.*;
 
-public class SMTPSender implements Runnable {
+public class SMTPSender extends Observable implements Runnable {
 	private domain.Session sess;
 
-	public SMTPSender(domain.Session s) {
+	public SMTPSender(domain.Session s, Observer o) {
+		if (o != null) {
+			this.addObserver(o);
+		}
 		sess = s;
 	}
 
 	@Override
+	/**
+	 * @throws IOException if the attached files paths are not valid
+	 * @throws 
+	 */
 	public void run() {
-		// Assuming you are sending email from localhost
 		String host = sess.getServer();
 		int port = sess.getServerPort();
 
 		int counter = 0;
 		int quantity = sess.getQuantity();
+		final String user = sess.getUser();
+		final String pass = sess.getPassword();
 		String from = sess.getFrom();
 		String subject = sess.getSubject();
 		String text = sess.getMessage();
@@ -32,78 +40,96 @@ public class SMTPSender implements Runnable {
 		// Setup mail server
 		properties.setProperty("mail.smtp.host", host);
 		properties.put("mail.smtp.port", port);
+		// properties.put("mail.smtp.starttls.enable", "true");
+		Session session;
+		// session = Session.getDefaultInstance(properties);
+		if (user == null || user.length() == 0) {
+			// Get the default Session object.
+			session = Session.getDefaultInstance(properties);
+		} else {
+			// Use authentication to get the session
+			properties.put("mail.user", user);
+			properties.put("mail.password", pass);
+			properties.put("mail.smtp.auth", "true");
+			properties.put("mail.smtp.starttls.enable", "true");
+			session = Session.getInstance(properties,
+					new javax.mail.Authenticator() {
+						protected PasswordAuthentication getPasswordAuthentication() {
+							return new PasswordAuthentication(user, pass);
+						}
+					});
+			// }
 
-		// Get the default Session object.
-		Session session = Session.getDefaultInstance(properties);
+			try {
 
-		try {
+				// Create a default MimeMessage object.
+				MimeMessage message = new MimeMessage(session);
 
-			// Create a default MimeMessage object.
-			MimeMessage message = new MimeMessage(session);
+				// Set the SentDate: header field
+				message.setSentDate(new Date());
 
-			// Set the SentDate: header field
-			message.setSentDate(new Date());
+				// Set From: header field
+				message.setFrom(new InternetAddress(from));
 
-			// Set From: header field
-			message.setFrom(new InternetAddress(from));
+				// Set Recipients: header field
+				InternetAddress[] recipients = new InternetAddress[recipientsStrings
+						.size()];
+				for (int i = 0; i < recipientsStrings.size(); i++) {
+					recipients[i] = new InternetAddress(
+							recipientsStrings.get(i));
+				}
+				message.setRecipients(Message.RecipientType.TO, recipients);
 
-			// Set Recipients: header field
-			InternetAddress[] recipients = new InternetAddress[recipientsStrings
-					.size()];
-			for (int i = 0; i < recipientsStrings.size(); i++) {
-				recipients[i] = new InternetAddress(recipientsStrings.get(i));
-			}
-			message.setRecipients(Message.RecipientType.TO, recipients);
+				// Create the message part
+				BodyPart messageBodyPart = new MimeBodyPart();
 
-			// Create the message part
-			BodyPart messageBodyPart = new MimeBodyPart();
+				// Fill the message
+				messageBodyPart.setText(text);
 
-			// Fill the message
-			messageBodyPart.setText(text);
+				// Create a multipar message
+				Multipart multipart = new MimeMultipart();
 
-			// Create a multipar message
-			Multipart multipart = new MimeMultipart();
-
-			// Set text message part
-			multipart.addBodyPart(messageBodyPart);
-
-			// Part two is attachment
-			for (int i = 0; i < attachmentPaths.size(); i++) {
-				messageBodyPart = new MimeBodyPart();
-				String filename = attachmentPaths.get(i);
-				DataSource source = new FileDataSource(filename);
-				messageBodyPart.setDataHandler(new DataHandler(source));
-				messageBodyPart.setFileName(filename);
+				// Set text message part
 				multipart.addBodyPart(messageBodyPart);
-			}
 
-			// Send the complete message parts
-			message.setContent(multipart);
-
-			for (counter = 0; counter < quantity; counter++) {
-				// Set Subject: header field
-				subject=sess.getSubject();
-				
-				if (sess.getCounter()) {
-					subject=String.valueOf(counter+1)+". "+subject;
+				// Part two is attachment
+				for (int i = 0; i < attachmentPaths.size(); i++) {
+					messageBodyPart = new MimeBodyPart();
+					String filename = attachmentPaths.get(i);
+					DataSource source = new FileDataSource(filename);
+					messageBodyPart.setDataHandler(new DataHandler(source));
+					messageBodyPart.setFileName(filename);
+					multipart.addBodyPart(messageBodyPart);
 				}
-				if(sess.getRandomSubject()){
-					subject=subject+" "+RandomGenerator.getRandomSubject();
+
+				// Send the complete message parts
+				message.setContent(multipart);
+
+				for (counter = 0; counter < quantity; counter++) {
+					setChanged();
+					notifyObservers(counter);
+					// Set Subject: header field
+					subject = sess.getSubject();
+
+					if (sess.getCounter()) {
+						subject = String.valueOf(counter + 1) + ". " + subject;
+					}
+					if (sess.getRandomSubject()) {
+						subject = subject + " "
+								+ RandomGenerator.getRandomSubject();
+					}
+					message.setSubject(subject);
+
+					// Send message
+					Transport.send(message);
+
+					// wait until the next message
+					Thread.sleep(sess.getDelay());
 				}
-				message.setSubject(subject);
-
-				// Send message
-				Transport.send(message);
-
-				System.out.println(String.format(
-						"Sent message no %d successfully.", counter));
-				
-				//wait untill the next message
-				Thread.sleep(sess.getDelay());
+			} catch (MessagingException | InterruptedException mex) {
+				// mex.printStackTrace();
 			}
-		} catch (MessagingException | InterruptedException mex) {
-			mex.printStackTrace();
 		}
-	}
 
+	}
 }

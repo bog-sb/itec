@@ -1,29 +1,24 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<Session>
+<session>
 <from>sender@domain.com</from>
 <tos>
 <to>first@example.com</to>
 <to>second@example.ro</to>
 </tos>
-<Subject>Dummy Subject</Subject>
-<Message>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-	tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-	quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-	consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
-	cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
-	proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</Message>
-<Attachments>
-<Attachment>filepath1</Attachment>
-<Attachment>filepath2</Attachment>
-</Attachments>
-<Via>SMPT</Via>
-<Server>smtp.gmail.com</Server>
-<ServerPort>25</ServerPort>
-<User>asdf</User>
-<Password>asdfasd</Password>
-<Quantity>100</Quantity>
-<Delay>2000</Delay>
-<Counter>true</Counter>
-<RandomSubject>true</RandomSubject>
-<RandomMessage>false</RandomMessage>
-</Session>
+<subject>Dummy Subject</subject>
+<message>sfjlsakjfkasjhgsfadsgfadgasg</message>
+<attachments>
+<attachment>filepath1</attachment>
+<attachment>filepath2</attachment>
+</attachments>
+<via>SMPT</via>
+<server>smtp.gmail.com</server>
+<serverPort>25</serverPort>
+<user>asdf</user>
+<password>asdfasd</password>
+<quantity>100</quantity>
+<delay>2000</delay>
+<counter>true</counter>
+<randomSubject>true</randomSubject>
+<randomMessage>false</randomMessage>
+</session>

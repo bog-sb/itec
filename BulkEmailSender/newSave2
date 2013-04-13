@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<session>
+<from>lol@loli.com</from>
+<tos>
+<to>lol@2loli.com</to>
+</tos>
+<subject>helool</subject>
+<message>alsdkalskfjalsf</message>
+<attachments>
+<attachment>C:\Users\Dan\workspace\BulkEmailSender\default.xml</attachment>
+</attachments>
+<via>smtp</via>
+<server>localhostad</server>
+<serverPort>25</serverPort>
+<user>adsa</user>
+<password/>
+<quantity>40</quantity>
+<delay>0</delay>
+<counter>false</counter>
+<randomSubject>true</randomSubject>
+<randomMessage>false</randomMessage>
+</session>

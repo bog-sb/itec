@@ -45,15 +45,15 @@ public class Session {
 		subject = "";
 		message = "";
 		via = "smtp";
-		quantity = 0;
-		delay = 0;
-		counter = false;
+		quantity = 1;
+		delay = 1000;
+		counter = true;
 		randomSubject = true;
 		randomMessage = false;
-		server = "";
+		server = "localhost";
 		user = "";
 		password = "";
-		serverPort = 0;
+		serverPort = 25;
 	}
 	
 	public Session(String XMLPath) throws IOException, SAXException,

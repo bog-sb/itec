@@ -1,6 +1,7 @@
 package controller;
 
 import java.io.IOException;
+import java.util.Observer;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -14,9 +15,12 @@ import domain.Session;
 public class MainController {
 	private Session ses;
 	private EmailSender sen = new EmailSender();
+	private Validator validator;
+	
 	public MainController()
 	{
 		newSession();
+		validator = new Validator();
 	}
 	
 	/// -------------------------
@@ -26,17 +30,17 @@ public class MainController {
 	}
 	public void openSession(String filename) throws Exception
 	{
-		//TODO: validate session, filename
 		ses = new Session(filename);
-		sen = new EmailSender();
+		//sen = new EmailSender();
 	}
 	public void saveSession(String filename) throws TransformerException, ParserConfigurationException
 	{
 		ses.saveXML(filename);
 	}
 	
-	public void runSession()
+	public void runSession() throws Exception
 	{
+		validator.validateSession(ses);
 		sen.runSession(ses);
 	}
 	public void stopSession()
@@ -46,5 +50,9 @@ public class MainController {
 	public Session getSession()
 	{
 		return ses;
+	}
+	
+	public void setMailCounterObserver(Observer o){
+		sen.setMailCounterObserver(o);
 	}
 }

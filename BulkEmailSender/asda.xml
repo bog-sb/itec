@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<session>
+<from>aurel@yahoo.com</from>
+<tos>
+<to>bog_sb@yahoo.com</to>
+<to>danuthaiduc@gmail.com</to>
+</tos>
+<subject>Dummy</subject>
+<message>lorem ipsum dolor sit amet</message>
+<attachments>
+<attachment>C:\Users\Dan\workspace\BulkEmailSender\file.txt</attachment>
+</attachments>
+<via>smtp</via>
+<server>smtp.gmail.com</server>
+<serverPort>25</serverPort>
+<user>sb.bogdan@gmail.com</user>
+<password>Sepultura69</password>
+<quantity>3</quantity>
+<delay>1000</delay>
+<counter>true</counter>
+<randomSubject>true</randomSubject>
+<randomMessage>false</randomMessage>
+</session>

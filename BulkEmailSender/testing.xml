@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<session>
+<from>lol@haha.com</from>
+<tos>
+<to>lol@haha.com</to>
+<to>lol@haha.com</to>
+</tos>
+<subject>subject</subject>
+<message>Message</message>
+<attachments>
+<attachment>C:\Users\Dan\workspace\BulkEmailSender\session.xsd</attachment>
+</attachments>
+<via>smtp</via>
+<server>localhost</server>
+<serverPort>25</serverPort>
+<user>user</user>
+<password>passwd</password>
+<quantity>1</quantity>
+<delay>1000</delay>
+<counter>true</counter>
+<randomSubject>true</randomSubject>
+<randomMessage>false</randomMessage>
+</session>

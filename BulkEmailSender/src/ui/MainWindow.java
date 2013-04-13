@@ -8,8 +8,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.Iterator;
 import java.util.Vector;
+import java.util.Observable;
+import java.util.Observer;
 
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
@@ -47,14 +51,19 @@ import domain.Session;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.swing.JEditorPane;
 import javax.swing.JScrollPane;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
+import javax.swing.KeyStroke;
+import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 
 @SuppressWarnings("serial")
-public class MainWindow extends JFrame {
+public class MainWindow extends JFrame implements Observer {
 
 	private JPanel contentPane;
 	private JTextField txtSrcaddr;
@@ -63,9 +72,9 @@ public class MainWindow extends JFrame {
 	private JTextField txtServer;
 	private JTextField txtUser;
 	private JLabel lblTitle = new JLabel("<unsaved>");
-
 	private AboutBox popup = new AboutBox();
-
+	private ActionListener saveAct;
+	private ActionListener saveAsAct;
 	// For the anonymous inner classes:
 	private final MainWindow me = this;
 	private final ButtonGroup buttonGroup = new ButtonGroup();
@@ -80,41 +89,61 @@ public class MainWindow extends JFrame {
 	private JCheckBox chckbxRandom = new JCheckBox("Add random subject");
 	private JSpinner txtPort = new JSpinner();
 	private JTextArea txtrMessage = new JTextArea();
-	private Boolean isSaved = false;
 	private JMenuItem mntmSaveAs = new JMenuItem("Save as...");
+	private boolean isSaved = true;
+	private JProgressBar progressBar;
+	private JButton btnStart = new JButton("Start");
+	private JButton btnStop = new JButton("Stop");
 
 	public static void main(String[] args) {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (Exception e1) {
-			e1.printStackTrace();
-		}
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					MainController ctrl = new MainController();
-					MainWindow frame = new MainWindow(ctrl);
 
-					ctrl.newSession();
-					frame.updateFields();
-
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+		if (args.length == 1) {
+			String sessionFile = args[0];
+			MainController ctrl = new MainController();
+			try {
+				ctrl.openSession(sessionFile);
+				ctrl.runSession();
+			} catch (Exception e) {
+				System.out.println(e.getMessage());
+				e.printStackTrace();
 			}
-		});
+
+		} else {
+			try {
+				UIManager.setLookAndFeel(UIManager
+						.getSystemLookAndFeelClassName());
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
+			EventQueue.invokeLater(new Runnable() {
+				public void run() {
+					try {
+						MainController ctrl = new MainController();
+						MainWindow frame = new MainWindow(ctrl);
+
+						ctrl.newSession();
+						frame.updateFields();
+
+						frame.setVisible(true);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			});
+		}
 	}
 
-	/**
-	 * Create the frame.
-	 * 
-	 * @param ctrl
-	 */
 	public MainWindow(final MainController ctl) {
 
 		this.ctrl = ctl;
+		ctrl.setMailCounterObserver(this);
 
+		this.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent evt) {
+				quit();
+			}
+		});
 		setIconImage(Toolkit
 				.getDefaultToolkit()
 				.getImage(
@@ -122,7 +151,7 @@ public class MainWindow extends JFrame {
 								.getResource("/com/sun/java/swing/plaf/windows/icons/HardDrive.gif")));
 		setResizable(false);
 		setTitle("Bulk Email Sender");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		setBounds(100, 100, 539, 697);
 		popup.setVisible(false);
 
@@ -137,13 +166,16 @@ public class MainWindow extends JFrame {
 		menuBar.add(mnFile);
 
 		JMenuItem mntmNew = new JMenuItem("New");
+		mntmNew.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N,
+				InputEvent.CTRL_MASK));
 		mntmNew.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				ctrl.newSession();
-				chooseYourDestiny = new JFileChooser(".");
-				lblTitle.setText("<unsaved>");
-				updateFields();
-
+				if (checkSave()) {
+					ctrl.newSession();
+					chooseYourDestiny.setSelectedFile(null);
+					lblTitle.setText("<unsaved>");
+					updateFields();
+				}
 			}
 		});
 		mntmNew.setIcon(new ImageIcon(MainWindow.class
@@ -151,27 +183,30 @@ public class MainWindow extends JFrame {
 		mnFile.add(mntmNew);
 
 		JMenuItem mntmOpen = new JMenuItem("Open");
+		mntmOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,
+				InputEvent.CTRL_MASK));
 		mntmOpen.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				int returnVal = chooseYourDestiny.showOpenDialog(me);
-				if (returnVal == JFileChooser.APPROVE_OPTION) {
-					try {
-						ctrl.openSession(chooseYourDestiny.getSelectedFile()
-								.getPath());
-						lblTitle.setText(chooseYourDestiny.getSelectedFile()
-								.getName());
-						isSaved = true;
-					} catch (SAXParseException err) {
-						JOptionPane.showMessageDialog(null,
-								"Invalid XML structure.", "Error",
-								JOptionPane.WARNING_MESSAGE);
+				if (checkSave()) {
+					int returnVal = chooseYourDestiny.showOpenDialog(me);
+					if (returnVal == JFileChooser.APPROVE_OPTION) {
+						try {
+							ctrl.openSession(chooseYourDestiny
+									.getSelectedFile().getPath());
+							lblTitle.setText(chooseYourDestiny
+									.getSelectedFile().getName());
+						} catch (SAXParseException err) {
+							JOptionPane.showMessageDialog(null,
+									"Invalid XML structure.", "Error",
+									JOptionPane.WARNING_MESSAGE);
 
-					} catch (Exception e) {
-						JOptionPane.showMessageDialog(null, e.getMessage(),
-								"Error", JOptionPane.WARNING_MESSAGE);
+						} catch (Exception e) {
+							JOptionPane.showMessageDialog(null, e.getMessage(),
+									"Error", JOptionPane.WARNING_MESSAGE);
+						}
 					}
+					me.updateFields();
 				}
-				me.updateFields();
 			}
 		});
 		mntmOpen.setIcon(new ImageIcon(
@@ -180,8 +215,10 @@ public class MainWindow extends JFrame {
 		mnFile.add(mntmOpen);
 
 		JMenuItem mntmSave = new JMenuItem("Save");
+		mntmSave.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,
+				InputEvent.CTRL_MASK));
 
-		final ActionListener saveAsAct = new ActionListener() {
+		saveAsAct = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				int returnVal = chooseYourDestiny.showSaveDialog(me);
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -199,28 +236,24 @@ public class MainWindow extends JFrame {
 			}
 		};
 
-		ActionListener saveAct = new ActionListener() {
+		saveAct = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					if (chooseYourDestiny.getSelectedFile() != null)
-					{
-					updateSession();
-					ctrl.saveSession(chooseYourDestiny.getSelectedFile()
-							.getPath());
-					lblTitle.setText(chooseYourDestiny.getSelectedFile()
-							.getName());
-					isSaved = true;
-					}
-					else
-					{
+					if (chooseYourDestiny.getSelectedFile() != null) {
+						updateSession();
+						ctrl.saveSession(chooseYourDestiny.getSelectedFile()
+								.getPath());
+						lblTitle.setText(chooseYourDestiny.getSelectedFile()
+								.getName());
+						isSaved = true;
+					} else {
 						saveAsAct.actionPerformed(e);
 					}
-				}
-				catch (TransformerException e1) {
+
+				} catch (TransformerException e1) {
 					JOptionPane.showMessageDialog(null, "XML exception",
 							"Error", JOptionPane.WARNING_MESSAGE);
 				} catch (ParserConfigurationException e1) {
-					// TODO Auto-generated catch block
 					JOptionPane.showMessageDialog(null, "XML exception",
 							"Error", JOptionPane.WARNING_MESSAGE);
 				}
@@ -232,14 +265,22 @@ public class MainWindow extends JFrame {
 				MainWindow.class
 						.getResource("/com/sun/java/swing/plaf/windows/icons/FloppyDrive.gif")));
 		mnFile.add(mntmSave);
+		mntmSaveAs
+				.setIcon(new ImageIcon(
+						MainWindow.class
+								.getResource("/javax/swing/plaf/metal/icons/ocean/floppy.gif")));
+		mntmSaveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,
+				InputEvent.CTRL_MASK | InputEvent.SHIFT_MASK));
 
 		mntmSaveAs.addActionListener(saveAsAct);
 		mnFile.add(mntmSaveAs);
 
 		JMenuItem mntmQuit = new JMenuItem("Quit");
+		mntmQuit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4,
+				InputEvent.ALT_MASK));
 		mntmQuit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				// me.
+				me.quit();
 			}
 		});
 		mntmQuit.setIcon(new ImageIcon(MainWindow.class
@@ -250,6 +291,7 @@ public class MainWindow extends JFrame {
 		menuBar.add(mnHelp);
 
 		JMenuItem mntmAbout = new JMenuItem("About");
+		mntmAbout.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
 		mntmAbout
 				.setIcon(new ImageIcon(
 						MainWindow.class
@@ -288,7 +330,7 @@ public class MainWindow extends JFrame {
 		txtSrcaddr = new JTextField();
 		txtSrcaddr.addPropertyChangeListener(new PropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent arg0) {
-				
+
 			}
 		});
 		txtSrcaddr.setBounds(0, 18, 249, 20);
@@ -302,7 +344,7 @@ public class MainWindow extends JFrame {
 		txtDestaddr = new JTextField();
 		txtDestaddr.addPropertyChangeListener(new PropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent evt) {
-				
+
 			}
 		});
 		txtDestaddr.setBounds(0, 56, 249, 20);
@@ -316,7 +358,7 @@ public class MainWindow extends JFrame {
 		txtSubject = new JTextField();
 		txtSubject.addPropertyChangeListener(new PropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent arg0) {
-				
+
 			}
 		});
 		txtSubject.setBounds(0, 94, 249, 20);
@@ -326,7 +368,7 @@ public class MainWindow extends JFrame {
 		JLabel lblMessage = new JLabel("Message:");
 		lblMessage.setBounds(269, 22, 97, 20);
 		panel.add(lblMessage);
-		
+
 		JScrollPane scrollPane_1 = new JScrollPane();
 		scrollPane_1.setBounds(10, 165, 249, 114);
 		panel.add(scrollPane_1);
@@ -342,19 +384,28 @@ public class MainWindow extends JFrame {
 				int returnVal = attachFile.showOpenDialog(me);
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
 					try {
-						me.updateFields();
-						Vector<String>vec = ctrl.getSession().getAttachments();
+						me.updateSession();
+						Vector<String> vec = ctrl.getSession().getAttachments();
+
+						Vector<String> showVec = new Vector<String>();
+						for (String el : vec) {
+							Path p = Paths.get(el);
+							showVec.add(p.getName(p.getNameCount() - 1)
+									.toString());
+						}
 						vec.add(attachFile.getSelectedFile().getPath());
+						showVec.add(attachFile.getSelectedFile().getName());
+
 						ctrl.getSession().setAttachments(vec);
-						listAttachments.setListData(ctrl.getSession().getAttachments());
-						
+						listAttachments.setListData(showVec);
+
 					} catch (Exception ex) {
 						JOptionPane.showMessageDialog(null, ex.getMessage(),
 								"Error", JOptionPane.WARNING_MESSAGE);
 						ex.printStackTrace();
 					}
 				}
-				
+
 			}
 		});
 		btnAttach.setBounds(10, 292, 82, 23);
@@ -364,10 +415,13 @@ public class MainWindow extends JFrame {
 		btnRemove.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				int dead = listAttachments.getSelectedIndex();
-				Vector<String>vec = ctrl.getSession().getAttachments();
-				vec.remove(dead);
-				ctrl.getSession().setAttachments(vec);
-				listAttachments.setListData(ctrl.getSession().getAttachments());
+				if (dead >= 0) {
+					Vector<String> vec = ctrl.getSession().getAttachments();
+					vec.remove(dead);
+					ctrl.getSession().setAttachments(vec);
+					listAttachments.setListData(ctrl.getSession()
+							.getAttachments());
+				}
 			}
 		});
 		btnRemove.setBounds(104, 292, 82, 23);
@@ -410,9 +464,9 @@ public class MainWindow extends JFrame {
 		rdbtnExchangeServerMail.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				if (e.getStateChange() == ItemEvent.SELECTED) {
-					// TODO: ESMP
+					ctrl.getSession().setVia("wcf");
 				} else {
-					// TODO: SMTP
+					ctrl.getSession().setVia("smtp");
 				}
 			}
 		});
@@ -484,7 +538,7 @@ public class MainWindow extends JFrame {
 		txtNumber = new JSpinner();
 		txtNumber.addPropertyChangeListener(new PropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent evt) {
-				
+
 			}
 		});
 		txtNumber.setModel(new SpinnerNumberModel(new Integer(1),
@@ -499,7 +553,7 @@ public class MainWindow extends JFrame {
 		txtDelay = new JSpinner();
 		txtDelay.addPropertyChangeListener(new PropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent evt) {
-				ctrl.getSession().setDelay((Integer)txtDelay.getValue());
+				ctrl.getSession().setDelay((Integer) txtDelay.getValue());
 			}
 		});
 		txtDelay.setModel(new SpinnerNumberModel(new Integer(1000),
@@ -507,11 +561,9 @@ public class MainWindow extends JFrame {
 		txtDelay.setBounds(177, 62, 67, 20);
 		panel_3.add(txtDelay);
 
-
 		chckbxCounter.setSelected(true);
 		chckbxCounter.setBounds(10, 160, 234, 25);
 		panel_3.add(chckbxCounter);
-
 
 		chckbxRandom.setSelected(true);
 		chckbxRandom.setBounds(10, 188, 234, 25);
@@ -521,15 +573,17 @@ public class MainWindow extends JFrame {
 		lblSubjectCustomization.setBounds(10, 139, 234, 14);
 		panel_3.add(lblSubjectCustomization);
 
-		JProgressBar progressBar = new JProgressBar();
+		progressBar = new JProgressBar();
+		progressBar.setStringPainted(true);
 		progressBar.setBounds(12, 608, 254, 27);
 		contentPane.add(progressBar);
 
-		final JButton btnStart = new JButton("Start");
-		final JButton btnStop = new JButton("Stop");
 		btnStop.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				ctrl.stopSession();
+				progressBar.setIndeterminate(false);
+				progressBar.setString("");
+				progressBar.setValue(0);
 				btnStop.setEnabled(false);
 				btnStart.setEnabled(true);
 			}
@@ -538,9 +592,19 @@ public class MainWindow extends JFrame {
 		btnStart.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				me.updateSession();
-				ctrl.runSession();
-				btnStop.setEnabled(true);
-				btnStart.setEnabled(false);
+				try {
+					progressBar.setIndeterminate(true);
+					progressBar.setString("Connecting");
+					progressBar.setMaximum((Integer) txtNumber.getValue() - 1);
+					ctrl.runSession();
+					btnStop.setEnabled(true);
+					btnStart.setEnabled(false);
+				} catch (Exception e) {
+					progressBar.setIndeterminate(false);
+					progressBar.setString("");
+					JOptionPane.showMessageDialog(null, e.getMessage(),
+							"Error", JOptionPane.WARNING_MESSAGE);
+				}
 			}
 		});
 		btnStart.setBounds(276, 608, 119, 27);
@@ -578,27 +642,65 @@ public class MainWindow extends JFrame {
 		chckbxCounter.setSelected(s.getCounter());
 		chckbxRandom.setSelected(s.getRandomSubject());
 	}
-	
-	public void updateSession()
-	{
+
+	public void updateSession() {
 		Session s = ctrl.getSession();
 		s.setFrom(txtSrcaddr.getText());
 		Vector<String> tos = new Vector<String>();
 		for (String to : txtDestaddr.getText().split(",")) {
-			tos.add(to.trim());
+			if (to.trim().compareTo("") != 0) {
+				tos.add(to.trim());
+			}
 		}
 		s.setTo(tos);
 		s.setFrom(txtSrcaddr.getText());
 		s.setSubject(txtSubject.getText());
 		s.setQuantity((Integer) txtNumber.getValue());
+		s.setDelay((Integer) txtDelay.getValue());
 		s.setCounter(chckbxCounter.isSelected());
 		s.setRandomSubject(chckbxRandom.isSelected());
 		s.setMessage(txtrMessage.getText());
 		s.setServer(txtServer.getText());
-		s.setServerPort((Integer)txtPort.getValue());
+		s.setServerPort((Integer) txtPort.getValue());
 		s.setUser(txtUser.getText());
 		s.setPassword(String.valueOf(txtPasswd.getPassword()));
 	}
+
+	public boolean checkSave() {
+		isSaved = false;
+		int response = JOptionPane.showConfirmDialog(null,
+				"Do you want to save the session?", "Warning",
+				JOptionPane.YES_NO_CANCEL_OPTION);
+		if (response == JOptionPane.YES_OPTION) {
+			saveAct.actionPerformed(null);
+			if (isSaved) {
+				return true;
+			}
+		} else if (response == JOptionPane.NO_OPTION) {
+			return true;
+		}
+		return false;
+	}
+
+	public void quit() {
+		if (checkSave()) {
+			this.dispose();
+		}
+	}
+
+	@Override
+	public void update(Observable arg0, Object arg1) {
+		
+		int counter = (Integer) arg1;
+		progressBar.setValue(counter);
+		if(progressBar.getValue()>0) {
+			progressBar.setIndeterminate(false);
+			progressBar.setStringPainted(false);
+		}
+			
+		if (counter == progressBar.getMaximum()) {
+			btnStop.setEnabled(false);
+			btnStart.setEnabled(true);
+		}
+	}
 }
-
-

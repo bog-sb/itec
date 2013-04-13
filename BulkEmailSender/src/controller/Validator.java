@@ -2,6 +2,8 @@ package controller;
 
 import java.util.regex.Pattern;
 
+import domain.Session;
+
 public class Validator {
 	private static final Pattern rfc2822 = Pattern.compile(
 	        "^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
@@ -42,6 +44,22 @@ public class Validator {
 		Integer intPort = Integer.valueOf(port);
 		if (intPort < 0 || intPort > 65535) {
 			throw new Exception("Invalid port");
+		}
+	}
+	
+	public void validatePort(Integer port) throws Exception {
+		if (port < 0 || port > 65535) {
+			throw new Exception("Invalid port");
+		} 
+	}
+	
+	public void validateSession(Session ses) throws Exception {
+		validatePort(ses.getServerPort());
+		validateEmail(ses.getFrom());
+		if(ses.getTo().size()==0)
+			throw new Exception("Missing address.");
+		for (String to : ses.getTo()) {
+			validateEmail(to);
 		}
 	}
 }
